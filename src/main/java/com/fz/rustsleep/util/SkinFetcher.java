@@ -14,52 +14,76 @@ public class SkinFetcher {
 
     public SkinFetcher(RustSleep plugin) {
         this.plugin = plugin;
+
         Plugin sr = Bukkit.getPluginManager().getPlugin("SkinsRestorer");
         srAvailable = sr != null && sr.isEnabled();
+
         plugin.getLogger().info("SkinsRestorer: " + (srAvailable ? "found" : "not found"));
     }
 
     /**
-     * Fetches skin async and stores it in the body.
-     * Calls onDone.run() on main thread when finished.
+     * Fetch skin async and apply to body
      */
     public void fetchSkin(SleepingBody body, Player player, Runnable onDone) {
+
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+
             String texture = null;
             String signature = null;
 
             // Try SkinsRestorer first
             if (srAvailable) {
+
                 try {
+
                     var srAPI = SkinsRestorerProvider.get();
                     var playerStorage = srAPI.getPlayerStorage();
+
                     var skinId = playerStorage.getSkinIdOfPlayer(player.getUniqueId());
 
                     if (skinId.isPresent()) {
-                        var skinData = srAPI.getSkinStorage().getPlayerSkin(skinId.get());
+
+                        var skinData = srAPI.getSkinStorage().getPlayerSkin(
+                            skinId.get().toString(),
+                            false
+                        );
 
                         if (skinData.isPresent()) {
+
                             var prop = skinData.get().getProperty();
+
                             texture = prop.getValue();
                             signature = prop.getSignature();
                         }
                     }
+
                 } catch (Exception e) {
-                    plugin.getLogger().warning("SkinsRestorer skin fetch failed for "
-                        + player.getName() + ": " + e.getMessage());
+
+                    plugin.getLogger().warning(
+                        "SkinsRestorer fetch failed for "
+                            + player.getName()
+                            + ": "
+                            + e.getMessage()
+                    );
                 }
             }
 
-            // Fallback: get from Bukkit PlayerProfile
+            // Fallback from Bukkit profile
             if (texture == null) {
+
                 try {
+
                     for (var prop : player.getPlayerProfile().getProperties()) {
+
                         if (prop.getName().equals("textures")) {
+
                             texture = prop.getValue();
                             signature = prop.getSignature();
+
                             break;
                         }
                     }
+
                 } catch (Exception ignored) {
                 }
             }
