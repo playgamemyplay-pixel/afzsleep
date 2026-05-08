@@ -1,0 +1,29 @@
+# ================================
+#   RustSleep v3.0.0 - Config
+# ================================
+
+settings:
+  # Minimum items in inventory to spawn a body
+  min-items-to-spawn: 5
+  # Minimum playtime in minutes before body system applies
+  min-playtime-minutes: 30
+  # Distance in blocks to show name tag and health
+  name-visible-distance: 8.0
+  # Safe zone protection duration in minutes
+  safezone-protection-minutes: 30
+
+messages:
+  prefix: "&8[&6RustSleep&8] &r"
+  body-killed: "&4[FZ] &c{player} &7was killed in their sleep by &c{killer}!"
+  cant-loot-self: "&cYou cannot loot your own sleeping body!"
+  cant-loot-safezone: "&cThis body is protected for &e{time} &cmore minutes!"
+  looting: "&7Looting &c{player}&7's body..."
+  inventory-closed: "&cThe player logged back in! Inventory closed."
+  stolen: "&aStolen: &f{amount}x {item}"
+  you-died-title: "&4&lYOU DIED"
+  you-died-subtitle: "&cKilled by &f{killer} &cwhile you were offline!"
+  you-died-chat-1: "&4&l=============================="
+  you-died-chat-2: "&c&l  YOU WERE KILLED WHILE SLEEPING"
+  you-died-chat-3: "&7  Killed by: &f&l{killer}"
+  you-died-chat-4: "&7  All your items were lost!"
+  you-died-chat-5: "&4&l=============================="
