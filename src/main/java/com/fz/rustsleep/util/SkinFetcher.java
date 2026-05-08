@@ -13,18 +13,26 @@ public class SkinFetcher {
     private final boolean srAvailable;
 
     public SkinFetcher(RustSleep plugin) {
+
         this.plugin = plugin;
 
         Plugin sr = Bukkit.getPluginManager().getPlugin("SkinsRestorer");
+
         srAvailable = sr != null && sr.isEnabled();
 
-        plugin.getLogger().info("SkinsRestorer: " + (srAvailable ? "found" : "not found"));
+        plugin.getLogger().info(
+            "SkinsRestorer: " + (srAvailable ? "found" : "not found")
+        );
     }
 
     /**
      * Fetch skin async and apply to body
      */
-    public void fetchSkin(SleepingBody body, Player player, Runnable onDone) {
+    public void fetchSkin(
+        SleepingBody body,
+        Player player,
+        Runnable onDone
+    ) {
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 
@@ -37,23 +45,27 @@ public class SkinFetcher {
                 try {
 
                     var srAPI = SkinsRestorerProvider.get();
+
                     var playerStorage = srAPI.getPlayerStorage();
 
-                    var skinId = playerStorage.getSkinIdOfPlayer(player.getUniqueId());
+                    var skinId =
+                        playerStorage.getSkinIdOfPlayer(
+                            player.getUniqueId()
+                        );
 
                     if (skinId.isPresent()) {
 
-                        var skinData = srAPI.getSkinStorage().getPlayerSkin(
-                            skinId.get().toString(),
-                            false
-                        );
+                        var skinData =
+                            srAPI.getSkinStorage().getPlayerSkin(
+                                skinId.get().toString(),
+                                false
+                            );
 
                         if (skinData.isPresent()) {
 
-                            var prop = skinData.get().getProperty();
+                            texture = skinData.get().getValue();
 
-                            texture = prop.getValue();
-                            signature = prop.getSignature();
+                            signature = skinData.get().getSignature();
                         }
                     }
 
@@ -73,11 +85,13 @@ public class SkinFetcher {
 
                 try {
 
-                    for (var prop : player.getPlayerProfile().getProperties()) {
+                    for (var prop :
+                        player.getPlayerProfile().getProperties()) {
 
                         if (prop.getName().equals("textures")) {
 
                             texture = prop.getValue();
+
                             signature = prop.getSignature();
 
                             break;
@@ -89,6 +103,7 @@ public class SkinFetcher {
             }
 
             body.setSkinTexture(texture);
+
             body.setSkinSignature(signature);
 
             Bukkit.getScheduler().runTask(plugin, onDone);
