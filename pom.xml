@@ -11,13 +11,13 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <!-- تم التحديث إلى جافا 21 لأن Paper 1.21.1 يتطلبه -->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <repositories>
-
         <!-- Paper -->
         <repository>
             <id>papermc</id>
@@ -30,12 +30,11 @@
             <url>https://repo.codemc.io/repository/maven-public/</url>
         </repository>
 
-        <!-- WorldGuard -->
+        <!-- EngineHub (WorldGuard & WorldEdit) -->
         <repository>
-            <id>sk89q</id>
+            <id>enginehub-maven</id>
             <url>https://maven.enginehub.org/repo/</url>
         </repository>
-
     </repositories>
 
     <dependencies>
@@ -60,7 +59,15 @@
         <dependency>
             <groupId>com.sk89q.worldguard</groupId>
             <artifactId>worldguard-bukkit</artifactId>
-            <version>7.0.12</version>
+            <version>7.0.12</version> 
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- WorldEdit (تمت إضافته صراحة لحل مشكلة الملف المعطوب) -->
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-bukkit</artifactId>
+            <version>7.3.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -84,7 +91,19 @@
 
     <build>
         <plugins>
+            
+            <!-- إضافة المترجم لضبط الجافا وتفادي التحذيرات -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
 
+            <!-- Shade Plugin لدمج الـ SQLite -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -93,13 +112,11 @@
                 <executions>
                     <execution>
                         <phase>package</phase>
-
                         <goals>
                             <goal>shade</goal>
                         </goals>
 
                         <configuration>
-
                             <createDependencyReducedPom>false</createDependencyReducedPom>
 
                             <relocations>
@@ -108,11 +125,9 @@
                                     <shadedPattern>com.fz.rustsleep.libs.sqlite</shadedPattern>
                                 </relocation>
                             </relocations>
-
                         </configuration>
                     </execution>
                 </executions>
-
             </plugin>
 
         </plugins>
