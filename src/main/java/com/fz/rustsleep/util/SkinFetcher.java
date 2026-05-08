@@ -28,7 +28,7 @@ public class SkinFetcher {
             String texture = null;
             String signature = null;
 
-            // Try SkinsRestorer first (supports cracked + bedrock players)
+            // Try SkinsRestorer first
             if (srAvailable) {
                 try {
                     var srAPI = SkinsRestorerProvider.get();
@@ -36,11 +36,11 @@ public class SkinFetcher {
                     var skinId = playerStorage.getSkinIdOfPlayer(player.getUniqueId());
 
                     if (skinId.isPresent()) {
-                        var skinData = srAPI.getSkinStorage()
-                            .getSkinData(skinId.get(), false);
+                        var skinData = srAPI.getSkinStorage().getPlayerSkin(skinId.get());
+
                         if (skinData.isPresent()) {
                             var prop = skinData.get().getProperty();
-                            texture   = prop.getValue();
+                            texture = prop.getValue();
                             signature = prop.getSignature();
                         }
                     }
@@ -50,23 +50,23 @@ public class SkinFetcher {
                 }
             }
 
-            // Fallback: get from Bukkit PlayerProfile (online Java players)
+            // Fallback: get from Bukkit PlayerProfile
             if (texture == null) {
                 try {
                     for (var prop : player.getPlayerProfile().getProperties()) {
                         if (prop.getName().equals("textures")) {
-                            texture   = prop.getValue();
+                            texture = prop.getValue();
                             signature = prop.getSignature();
                             break;
                         }
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
 
             body.setSkinTexture(texture);
             body.setSkinSignature(signature);
 
-            // Back to main thread
             Bukkit.getScheduler().runTask(plugin, onDone);
         });
     }
