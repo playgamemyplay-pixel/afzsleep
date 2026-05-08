@@ -48,7 +48,7 @@ public class NpcSpawner {
         if (viewer.getUniqueId().equals(body.getOwnerUUID())) return;
         if (body.getNpcEntityId() == -1) return;
 
-        // Step 1: Add to tab list (required before spawning player entity)
+        // Step 1: Add to tab list
         sendTabAdd(body, viewer);
 
         // Step 2: Spawn entity
@@ -64,13 +64,13 @@ public class NpcSpawner {
         );
         send(viewer, spawn);
 
-        // Step 3: Metadata (sleeping pose + hidden name tag)
+        // Step 3: Metadata
         sendMetadata(body, viewer, false);
 
         // Step 4: Equipment
         sendEquipment(body, viewer);
 
-        // Step 5: Remove from tab list after 1 second (so name doesn't show in tab)
+        // Step 5: Remove from tab after 1 second
         Bukkit.getScheduler().runTaskLater(plugin, () -> sendTabRemove(body, viewer), 20L);
     }
 
@@ -86,10 +86,6 @@ public class NpcSpawner {
         sendTabRemove(body, viewer);
     }
 
-    /**
-     * Called every tick by the name tag task.
-     * Shows/hides the name tag based on distance.
-     */
     public void updateNameTag(SleepingBody body, Player viewer, boolean visible) {
         if (body.getNpcEntityId() == -1) return;
         sendMetadata(body, viewer, visible);
@@ -98,10 +94,13 @@ public class NpcSpawner {
     public void updateHealthForAll(SleepingBody body) {
         double dist = plugin.getConfig().getDouble("settings.name-visible-distance", 8.0);
         double distSq = dist * dist;
+
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.getUniqueId().equals(body.getOwnerUUID())) continue;
+
             boolean nearby = p.getWorld().equals(body.getLocation().getWorld())
                 && p.getLocation().distanceSquared(body.getLocation()) <= distSq;
+
             sendMetadata(body, p, nearby);
         }
     }
@@ -112,17 +111,29 @@ public class NpcSpawner {
 
     private void sendTabAdd(SleepingBody body, Player viewer) {
         List<TextureProperty> textures = new ArrayList<>();
+
         if (body.getSkinTexture() != null && body.getSkinSignature() != null) {
-            textures.add(new TextureProperty("textures",
-                body.getSkinTexture(), body.getSkinSignature()));
+            textures.add(new TextureProperty(
+                "textures",
+                body.getSkinTexture(),
+                body.getSkinSignature()
+            ));
         }
 
-        UserProfile profile = new UserProfile(body.getNpcUUID(), body.getOwnerName(), textures);
+        UserProfile profile = new UserProfile(
+            body.getNpcUUID(),
+            body.getOwnerName(),
+            textures
+        );
 
         WrapperPlayServerPlayerInfoUpdate.PlayerInfo info =
             new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(
-                profile, true, 0, GameMode.SURVIVAL,
-                Component.text(body.getOwnerName()), null
+                profile,
+                true,
+                0,
+                GameMode.SURVIVAL,
+                Component.text(body.getOwnerName()),
+                null
             );
 
         send(viewer, new WrapperPlayServerPlayerInfoUpdate(
@@ -136,75 +147,117 @@ public class NpcSpawner {
 
     private void sendTabRemove(SleepingBody body, Player viewer) {
         send(viewer, new WrapperPlayServerPlayerInfoRemove(
-            Collections.singletonList(body.getNpcUUID())));
+            Collections.singletonList(body.getNpcUUID())
+        ));
     }
 
     private void sendMetadata(SleepingBody body, Player viewer, boolean nameVisible) {
         List<EntityData> metadata = new ArrayList<>();
 
-        // Build name component: "PlayerName ❤ 18/20"  or countdown if safezone
         String nameStr = buildNameString(body);
-        metadata.add(new EntityData(2, EntityDataTypes.OPTIONAL_COMPONENT,
-            Optional.of(Component.text(nameStr))));
 
-        // Name tag visibility — controlled by our distance task
-        metadata.add(new EntityData(3, EntityDataTypes.BOOLEAN, nameVisible));
+        metadata.add(new EntityData(
+            2,
+            EntityDataTypes.OPTIONAL_COMPONENT,
+            Optional.of(Component.text(nameStr))
+        ));
 
-        // Sleeping pose (index 6)
-        metadata.add(new EntityData(6, EntityDataTypes.ENTITY_POSE, EntityPose.SLEEPING));
+        metadata.add(new EntityData(
+            3,
+            EntityDataTypes.BOOLEAN,
+            nameVisible
+        ));
 
-        // Skin layers — show all (index 17)
-        metadata.add(new EntityData(17, EntityDataTypes.BYTE, (byte) 0x7F));
+        metadata.add(new EntityData(
+            6,
+            EntityDataTypes.ENTITY_POSE,
+            EntityPose.SLEEPING
+        ));
 
-        send(viewer, new WrapperPlayServerEntityMetadata(body.getNpcEntityId(), metadata));
+        metadata.add(new EntityData(
+            17,
+            EntityDataTypes.BYTE,
+            (byte) 0x7F
+        ));
+
+        send(viewer, new WrapperPlayServerEntityMetadata(
+            body.getNpcEntityId(),
+            metadata
+        ));
     }
 
     private String buildNameString(SleepingBody body) {
-        String hearts = "\u2764"; // ❤
-        int hp    = (int) body.getHealth();
+        String hearts = "\u2764";
+
+        int hp = (int) body.getHealth();
         int maxHp = (int) body.getMaxHealth();
 
         if (body.isSafezoneProtected()) {
             long mins = body.getRemainingProtectionMinutes();
             long secs = ((body.getSafezoneExpiry() - System.currentTimeMillis()) / 1000L) % 60;
-            return String.format("\u00A7c%s \u00A77%s %d/%d \u00A7e[Protected %dm %ds]",
-                body.getOwnerName(), hearts, hp, maxHp, mins, secs);
+
+            return String.format(
+                "\u00A7c%s \u00A77%s %d/%d \u00A7e[Protected %dm %ds]",
+                body.getOwnerName(),
+                hearts,
+                hp,
+                maxHp,
+                mins,
+                secs
+            );
         }
 
-        // Color health red->green
-        String hpColor = hp > maxHp * 0.6 ? "\u00A7a" : hp > maxHp * 0.3 ? "\u00A7e" : "\u00A7c";
-        return String.format("\u00A7f%s %s%s %d/%d",
-            body.getOwnerName(), hpColor, hearts, hp, maxHp);
+        String hpColor =
+            hp > maxHp * 0.6 ? "\u00A7a" :
+            hp > maxHp * 0.3 ? "\u00A7e" :
+            "\u00A7c";
+
+        return String.format(
+            "\u00A7f%s %s%s %d/%d",
+            body.getOwnerName(),
+            hpColor,
+            hearts,
+            hp,
+            maxHp
+        );
     }
 
     private void sendEquipment(SleepingBody body, Player viewer) {
         List<Equipment> list = new ArrayList<>();
 
-        addEquip(list, EquipmentSlot.HELMET,     body.getHelmet());
-        addEquip(list, EquipmentSlot.CHESTPLATE, body.getChestplate());
-        addEquip(list, EquipmentSlot.LEGGINGS,   body.getLeggings());
-        addEquip(list, EquipmentSlot.BOOTS,      body.getBoots());
-        addEquip(list, EquipmentSlot.OFF_HAND,   body.getOffhand());
+        addEquip(list, EquipmentSlot.HELMET, body.getHelmet());
+        addEquip(list, EquipmentSlot.CHEST, body.getChestplate());
+        addEquip(list, EquipmentSlot.LEGGINGS, body.getLeggings());
+        addEquip(list, EquipmentSlot.BOOTS, body.getBoots());
+        addEquip(list, EquipmentSlot.OFF_HAND, body.getOffhand());
 
-        // Main hand = held item (slot 0)
         ItemStack[] inv = body.getContents();
-        if (inv != null && inv.length > 0 && inv[0] != null)
-            addEquip(list, EquipmentSlot.MAIN_HAND, inv[0]);
 
-        if (!list.isEmpty())
-            send(viewer, new WrapperPlayServerEntityEquipment(body.getNpcEntityId(), list));
+        if (inv != null && inv.length > 0 && inv[0] != null) {
+            addEquip(list, EquipmentSlot.MAIN_HAND, inv[0]);
+        }
+
+        if (!list.isEmpty()) {
+            send(viewer, new WrapperPlayServerEntityEquipment(
+                body.getNpcEntityId(),
+                list
+            ));
+        }
     }
 
     private void addEquip(List<Equipment> list, EquipmentSlot slot, ItemStack item) {
-        if (item != null && item.getType() != org.bukkit.Material.AIR)
-            list.add(new Equipment(slot, SpigotConversionUtil.fromBukkitItemStack(item)));
+        if (item != null && item.getType() != org.bukkit.Material.AIR) {
+            list.add(new Equipment(
+                slot,
+                SpigotConversionUtil.fromBukkitItemStack(item)
+            ));
+        }
     }
 
     private void send(Player player, Object packet) {
         try {
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
-        } catch (Exception e) {
-            // Silently ignore send errors (player may have disconnected)
+        } catch (Exception ignored) {
         }
     }
 }
