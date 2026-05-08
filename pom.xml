@@ -3,6 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.fz</groupId>
     <artifactId>RustSleep</artifactId>
     <version>3.0.0</version>
@@ -19,25 +20,20 @@
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+
         <repository>
-            <id>codemc-releases</id>
-            <url>https://repo.codemc.io/repository/maven-releases/</url>
+            <id>codemc-public</id>
+            <url>https://repo.codemc.org/repository/maven-public/</url>
         </repository>
-        <repository>
-            <id>codemc-snapshots</id>
-            <url>https://repo.codemc.io/repository/maven-snapshots/</url>
-        </repository>
+
         <repository>
             <id>sk89q</id>
             <url>https://maven.enginehub.org/repo/</url>
         </repository>
-        <repository>
-            <id>skinsrestorer</id>
-            <url>https://repo.skinsrestorer.net/repository/skinsrestorer/</url>
-        </repository>
     </repositories>
 
     <dependencies>
+
         <!-- Paper API -->
         <dependency>
             <groupId>io.papermc.paper</groupId>
@@ -70,37 +66,48 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- SQLite JDBC (shaded into jar) -->
+        <!-- SQLite JDBC -->
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.46.0.0</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.5.1</version>
+
                 <executions>
                     <execution>
                         <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+
                             <relocations>
                                 <relocation>
                                     <pattern>org.sqlite</pattern>
                                     <shadedPattern>com.fz.rustsleep.libs.sqlite</shadedPattern>
                                 </relocation>
                             </relocations>
+
                         </configuration>
                     </execution>
                 </executions>
+
             </plugin>
+
         </plugins>
     </build>
+
 </project>
